@@ -88,9 +88,25 @@ spec:
           costCenter: ${{ parameters.costCenter }}
           versioning: ${{ parameters.versioning }}
           description: ${{ parameters.description }}
-        # Only include ACK CRs — exclude catalog-info.yaml (Backstage-only, not a K8s resource)
-        templateFileExtension: .yaml
-        copyWithoutRender:
+        # Only include the ACK CR — catalog-info.yaml is fetched separately below
+        exclude:
+          - catalog-info.yaml
+
+    - id: fetch-catalog
+      name: Generate Backstage Catalog Entity
+      action: fetch:template
+      input:
+        url: ./content
+        targetPath: catalog/${{ parameters.team }}
+        values:
+          projectName: ${{ parameters.projectName }}
+          team: ${{ parameters.team }}
+          environment: ${{ parameters.environment }}
+          costCenter: ${{ parameters.costCenter }}
+          versioning: ${{ parameters.versioning }}
+          description: ${{ parameters.description }}
+        # Only include catalog-info.yaml — exclude the ACK CR
+        include:
           - catalog-info.yaml
 
     - id: pr
@@ -124,11 +140,10 @@ spec:
       name: Register in Backstage Catalog
       action: catalog:register
       input:
-        # Register the resource entity so it appears in the Backstage catalog after PR merge
-        # catalog-info.yaml is in a separate catalog/ path excluded from ArgoCD sync
+        # Register the resource entity so it appears in Backstage Catalog → Resources
+        # catalog/ is excluded from ArgoCD sync via .argocdignore
         repoContentsUrl: ${{ steps['pr'].output.remoteUrl }}
         catalogInfoPath: /catalog/${{ parameters.team }}/catalog-info.yaml
-        optional: true
 
     - id: notify
       name: Notify
