@@ -1,0 +1,40 @@
+apiVersion: rds.services.k8s.aws/v1alpha1
+kind: DBInstance
+metadata:
+  name: ${{ values.team }}-${{ values.projectName }}-${{ values.environment }}
+  namespace: ${{ values.team }}
+  labels:
+    team: ${{ values.team }}
+    environment: ${{ values.environment }}
+    cost-center: ${{ values.costCenter }}
+    managed-by: backstage
+    provisioner: ack
+spec:
+  dbInstanceIdentifier: ${{ values.team }}-${{ values.projectName }}-${{ values.environment }}
+  dbInstanceClass: ${{ values.instanceClass }}
+  engine: postgres
+  engineVersion: "15.4"
+  masterUsername: ${{ values.dbUsername }}
+  masterUserPassword:
+    namespace: ${{ values.team }}
+    name: ${{ values.projectName }}-db-secret
+    key: password
+  allocatedStorage: ${{ values.allocatedStorage }}
+  storageType: gp3
+  storageEncrypted: true
+  multiAZ: false
+  publiclyAccessible: false
+  deletionProtection: false
+  backupRetentionPeriod: 7
+  dbSubnetGroupName: ${{ values.team }}-${{ values.projectName }}-${{ values.environment }}-subnet-group
+  tags:
+    - key: team
+      value: ${{ values.team }}
+    - key: environment
+      value: ${{ values.environment }}
+    - key: cost-center
+      value: ${{ values.costCenter }}
+    - key: managed-by
+      value: backstage-ack
+    - key: project
+      value: ${{ values.projectName }}

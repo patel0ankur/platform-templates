@@ -1,0 +1,37 @@
+apiVersion: s3.services.k8s.aws/v1alpha1
+kind: Bucket
+metadata:
+  name: ${{ values.team }}-${{ values.projectName }}-${{ values.environment }}
+  namespace: ${{ values.team }}
+  labels:
+    team: ${{ values.team }}
+    environment: ${{ values.environment }}
+    cost-center: ${{ values.costCenter }}
+    managed-by: backstage
+    provisioner: ack
+spec:
+  name: ${{ values.team }}-${{ values.projectName }}-${{ values.environment }}
+  {% if values.versioning %}
+  versioningConfiguration:
+    status: Enabled
+  {% endif %}
+  serverSideEncryptionConfiguration:
+    rules:
+      - applyServerSideEncryptionByDefault:
+          sseAlgorithm: aws:kms
+  publicAccessBlockConfiguration:
+    blockPublicAcls: true
+    blockPublicPolicy: true
+    ignorePublicAcls: true
+    restrictPublicBuckets: true
+  tags:
+    - key: team
+      value: ${{ values.team }}
+    - key: environment
+      value: ${{ values.environment }}
+    - key: cost-center
+      value: ${{ values.costCenter }}
+    - key: managed-by
+      value: backstage-ack
+    - key: project
+      value: ${{ values.projectName }}

@@ -1,0 +1,25 @@
+apiVersion: rds.services.k8s.aws/v1alpha1
+kind: DBSubnetGroup
+metadata:
+  name: ${{ values.team }}-${{ values.projectName }}-${{ values.environment }}-subnet-group
+  namespace: ${{ values.team }}
+  labels:
+    team: ${{ values.team }}
+    environment: ${{ values.environment }}
+    managed-by: backstage
+    provisioner: ack
+spec:
+  name: ${{ values.team }}-${{ values.projectName }}-${{ values.environment }}-subnet-group
+  description: "Subnet group for ${{ values.projectName }} (${{ values.environment }}) — managed by Backstage/ACK"
+  # subnetIDs are populated from the VPC baseline Terraform module outputs
+  # Update these with the actual private subnet IDs from your VPC
+  subnetIDs:
+    - subnet-REPLACE_WITH_PRIVATE_SUBNET_1
+    - subnet-REPLACE_WITH_PRIVATE_SUBNET_2
+  tags:
+    - key: team
+      value: ${{ values.team }}
+    - key: environment
+      value: ${{ values.environment }}
+    - key: managed-by
+      value: backstage-ack

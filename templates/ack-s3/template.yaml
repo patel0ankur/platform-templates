@@ -1,0 +1,143 @@
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: ack-s3-bucket
+  title: Request S3 Bucket
+  description: |
+    Self-service provisioning of an Amazon S3 bucket via ACK.
+    Generates an ACK CR and opens a PR in the platform-configs repo.
+    ArgoCD syncs it automatically after approval.
+  tags:
+    - aws
+    - s3
+    - ack
+    - storage
+spec:
+  owner: group:platform-team
+  type: resource
+
+  parameters:
+    - title: Bucket Details
+      required:
+        - projectName
+        - team
+        - environment
+        - costCenter
+      properties:
+        projectName:
+          title: Project Name
+          type: string
+          description: Unique name for your project (lowercase, hyphens only)
+          pattern: '^[a-z][a-z0-9-]*$'
+          ui:autofocus: true
+        team:
+          title: Team Name
+          type: string
+          description: Your team name (used for cost attribution and RBAC)
+          pattern: '^[a-z][a-z0-9-]*$'
+        environment:
+          title: Environment
+          type: string
+          description: Target environment
+          enum:
+            - development
+            - staging
+            - production
+          default: development
+        costCenter:
+          title: Cost Center
+          type: string
+          description: Cost center code for billing attribution
+        versioning:
+          title: Enable Versioning
+          type: boolean
+          description: Recommended for production — allows recovering deleted objects
+          default: false
+        description:
+          title: Purpose
+          type: string
+          description: What will this bucket be used for?
+          ui:widget: textarea
+
+    - title: Platform Config Repository
+      required:
+        - repoUrl
+      properties:
+        repoUrl:
+          title: Platform Configs Repository
+          type: string
+          ui:field: RepoUrlPicker
+          ui:options:
+            allowedHosts:
+              - github.com
+          description: The platform-configs GitOps repository
+
+  steps:
+    - id: fetch
+      name: Generate ACK S3 CR
+      action: fetch:template
+      input:
+        url: ./content
+        targetPath: teams/${{ parameters.team }}/infra
+        values:
+          projectName: ${{ parameters.projectName }}
+          team: ${{ parameters.team }}
+          environment: ${{ parameters.environment }}
+          costCenter: ${{ parameters.costCenter }}
+          versioning: ${{ parameters.versioning }}
+          description: ${{ parameters.description }}
+
+    - id: pr
+      name: Open Pull Request
+      action: publish:github:pull-request
+      input:
+        repoUrl: ${{ parameters.repoUrl }}
+        title: "feat(s3): provision bucket for ${{ parameters.team }}/${{ parameters.projectName }} [${{ parameters.environment }}]"
+        description: |
+          ## S3 Bucket Request
+
+          | Field | Value |
+          |---|---|
+          | **Project** | `${{ parameters.projectName }}` |
+          | **Team** | `${{ parameters.team }}` |
+          | **Environment** | `${{ parameters.environment }}` |
+          | **Cost Center** | `${{ parameters.costCenter }}` |
+          | **Versioning** | `${{ parameters.versioning }}` |
+          | **Purpose** | ${{ parameters.description }} |
+
+          ### What happens after merge
+          1. ArgoCD detects this PR merge and syncs the cluster
+          2. ACK S3 controller creates the bucket in AWS
+          3. The bucket is ready — no manual steps needed
+
+          > Bucket name: `${{ parameters.team }}-${{ parameters.projectName }}-${{ parameters.environment }}`
+        branchName: "ack/s3-${{ parameters.team }}-${{ parameters.projectName }}-${{ parameters.environment }}"
+        targetBranchName: main
+
+    - id: notify
+      name: Notify
+      action: notification:send
+      input:
+        recipients: entity
+        entityRefs:
+          - user:default/${{ parameters.team }}
+        title: "S3 Bucket request submitted"
+        info: "PR opened for ${{ parameters.team }}/${{ parameters.projectName }} S3 bucket. Awaiting platform team approval."
+        severity: normal
+
+  output:
+    links:
+      - title: View Pull Request
+        url: ${{ steps['pr'].output.remoteUrl }}
+        icon: github
+    text:
+      - title: Next Steps
+        content: |
+          ✅ Pull request opened successfully.
+
+          **Bucket name (after provisioning)**: `${{ parameters.team }}-${{ parameters.projectName }}-${{ parameters.environment }}`
+
+          After the PR is approved and merged:
+          - ArgoCD will sync automatically
+          - ACK will create the S3 bucket in AWS
+          - No further action needed from you

@@ -1,0 +1,167 @@
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: ack-rds-database
+  title: Request RDS Database
+  description: |
+    Self-service provisioning of an Amazon RDS PostgreSQL database via ACK.
+    Generates ACK CRs (DBSubnetGroup + DBInstance) and opens a PR in the platform-configs repo.
+    ArgoCD syncs it automatically after approval.
+  tags:
+    - aws
+    - rds
+    - postgresql
+    - ack
+    - database
+spec:
+  owner: group:platform-team
+  type: resource
+
+  parameters:
+    - title: Database Details
+      required:
+        - projectName
+        - team
+        - environment
+        - costCenter
+        - dbUsername
+      properties:
+        projectName:
+          title: Project Name
+          type: string
+          description: Unique name for your project (lowercase, hyphens only)
+          pattern: '^[a-z][a-z0-9-]*$'
+          ui:autofocus: true
+        team:
+          title: Team Name
+          type: string
+          description: Your team name (used for cost attribution and RBAC)
+          pattern: '^[a-z][a-z0-9-]*$'
+        environment:
+          title: Environment
+          type: string
+          enum:
+            - development
+            - staging
+            - production
+          default: development
+        costCenter:
+          title: Cost Center
+          type: string
+          description: Cost center code for billing attribution
+        dbUsername:
+          title: Database Username
+          type: string
+          description: Master username for the database
+          default: appuser
+          pattern: '^[a-zA-Z][a-zA-Z0-9_]*$'
+        instanceClass:
+          title: Instance Size
+          type: string
+          description: Database instance size
+          enum:
+            - db.t3.micro
+            - db.t3.small
+            - db.t3.medium
+            - db.m5.large
+          default: db.t3.micro
+        allocatedStorage:
+          title: Storage (GB)
+          type: integer
+          description: Allocated storage in gigabytes
+          default: 20
+          minimum: 20
+          maximum: 100
+        purpose:
+          title: Purpose
+          type: string
+          description: What is this database for?
+          ui:widget: textarea
+
+    - title: Platform Config Repository
+      required:
+        - repoUrl
+      properties:
+        repoUrl:
+          title: Platform Configs Repository
+          type: string
+          ui:field: RepoUrlPicker
+          ui:options:
+            allowedHosts:
+              - github.com
+          description: The platform-configs GitOps repository
+
+  steps:
+    - id: fetch
+      name: Generate ACK RDS CRs
+      action: fetch:template
+      input:
+        url: ./content
+        targetPath: teams/${{ parameters.team }}/infra
+        values:
+          projectName: ${{ parameters.projectName }}
+          team: ${{ parameters.team }}
+          environment: ${{ parameters.environment }}
+          costCenter: ${{ parameters.costCenter }}
+          dbUsername: ${{ parameters.dbUsername }}
+          instanceClass: ${{ parameters.instanceClass }}
+          allocatedStorage: ${{ parameters.allocatedStorage }}
+          purpose: ${{ parameters.purpose }}
+
+    - id: pr
+      name: Open Pull Request
+      action: publish:github:pull-request
+      input:
+        repoUrl: ${{ parameters.repoUrl }}
+        title: "feat(rds): provision PostgreSQL DB for ${{ parameters.team }}/${{ parameters.projectName }} [${{ parameters.environment }}]"
+        description: |
+          ## RDS Database Request
+
+          | Field | Value |
+          |---|---|
+          | **Project** | `${{ parameters.projectName }}` |
+          | **Team** | `${{ parameters.team }}` |
+          | **Environment** | `${{ parameters.environment }}` |
+          | **Cost Center** | `${{ parameters.costCenter }}` |
+          | **Engine** | PostgreSQL 15.4 |
+          | **Instance Class** | `${{ parameters.instanceClass }}` |
+          | **Storage** | `${{ parameters.allocatedStorage }} GB` |
+          | **Master User** | `${{ parameters.dbUsername }}` |
+          | **Purpose** | ${{ parameters.purpose }} |
+
+          ### What happens after merge
+          1. ArgoCD detects this PR merge and syncs the cluster
+          2. ACK creates DBSubnetGroup and DBInstance in AWS
+          3. Database endpoint available in Kubernetes secret `${{ parameters.projectName }}-db-secret`
+
+          > ⚠️ DB password will be stored in AWS Secrets Manager and referenced as a Kubernetes secret
+        branchName: "ack/rds-${{ parameters.team }}-${{ parameters.projectName }}-${{ parameters.environment }}"
+        targetBranchName: main
+
+    - id: notify
+      name: Notify
+      action: notification:send
+      input:
+        recipients: entity
+        entityRefs:
+          - user:default/${{ parameters.team }}
+        title: "RDS Database request submitted"
+        info: "PR opened for ${{ parameters.team }}/${{ parameters.projectName }} PostgreSQL database. Awaiting platform team approval."
+        severity: normal
+
+  output:
+    links:
+      - title: View Pull Request
+        url: ${{ steps['pr'].output.remoteUrl }}
+        icon: github
+    text:
+      - title: Next Steps
+        content: |
+          ✅ Pull request opened successfully.
+
+          **DB Identifier**: `${{ parameters.team }}-${{ parameters.projectName }}-${{ parameters.environment }}`
+
+          After the PR is approved and merged:
+          - ArgoCD will sync automatically
+          - ACK will create the RDS instance (this takes ~5-10 minutes)
+          - Connection details will be stored in Kubernetes secret `${{ parameters.projectName }}-db-secret` in namespace `${{ parameters.team }}`
