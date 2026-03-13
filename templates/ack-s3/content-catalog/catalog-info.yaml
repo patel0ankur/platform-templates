@@ -6,6 +6,11 @@ metadata:
   annotations:
     backstage.io/managed-by-location: "url:https://github.com/patel0ankur/idp-infra-configs/blob/main/teams/${{ values.team }}/infra/s3-bucket.yaml"
     backstage.io/managed-by-origin-location: "url:https://github.com/patel0ankur/idp-infra-configs/blob/main/teams/${{ values.team }}/infra/s3-bucket.yaml"
+    # AWS resource details — visible in the About card
+    aws/resource-type: "S3 Bucket"
+    aws/bucket-name: "${{ values.team }}-${{ values.projectName }}-${{ values.environment }}"
+    aws/region: "us-east-1"
+    aws/console-url: "https://s3.console.aws.amazon.com/s3/buckets/${{ values.team }}-${{ values.projectName }}-${{ values.environment }}"
   labels:
     team: ${{ values.team }}
     environment: ${{ values.environment }}
@@ -16,6 +21,13 @@ metadata:
     - aws
     - ack
     - ${{ values.environment }}
+  links:
+    - url: "https://s3.console.aws.amazon.com/s3/buckets/${{ values.team }}-${{ values.projectName }}-${{ values.environment }}"
+      title: "View in AWS S3 Console"
+      icon: dashboard
+    - url: "https://github.com/patel0ankur/idp-infra-configs/blob/main/teams/${{ values.team }}/infra/s3-bucket.yaml"
+      title: "View ACK Manifest (GitHub)"
+      icon: github
 spec:
   type: s3-bucket
   owner: group:${{ values.team }}
