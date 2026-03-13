@@ -1,0 +1,11 @@
+apiVersion: backstage.io/v1alpha1
+kind: Location
+metadata:
+  name: platform-templates
+  description: IDP self-service templates — ACK resource provisioning for AWS infrastructure
+spec:
+  # Add new templates here — Backstage auto-discovers them on next catalog refresh
+  # No Backstage rebuild or restart needed
+  targets:
+    - ./templates/ack-s3/template.yaml
+    - ./templates/ack-rds/template.yaml
