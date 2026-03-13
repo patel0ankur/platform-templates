@@ -27,14 +27,16 @@ spec:
         projectName:
           title: Project Name
           type: string
-          description: Unique name for your project (lowercase, hyphens only)
+          description: "Unique project name (lowercase, hyphens only, max 20 chars). Combined with team name it forms the bucket name: <team>-<project>-<env>"
           pattern: '^[a-z][a-z0-9-]*$'
+          maxLength: 20
           ui:autofocus: true
         team:
           title: Team Name
           type: string
-          description: Your team name (used for cost attribution and RBAC)
+          description: "Your team name (lowercase, hyphens only, max 20 chars)"
           pattern: '^[a-z][a-z0-9-]*$'
+          maxLength: 20
         environment:
           title: Environment
           type: string
@@ -73,7 +75,7 @@ spec:
           description: The platform-configs GitOps repository
 
   steps:
-    - id: fetch
+    - id: fetch-ack
       name: Generate ACK S3 CR
       action: fetch:template
       input:
@@ -86,6 +88,10 @@ spec:
           costCenter: ${{ parameters.costCenter }}
           versioning: ${{ parameters.versioning }}
           description: ${{ parameters.description }}
+        # Only include ACK CRs — exclude catalog-info.yaml (Backstage-only, not a K8s resource)
+        templateFileExtension: .yaml
+        copyWithoutRender:
+          - catalog-info.yaml
 
     - id: pr
       name: Open Pull Request
@@ -118,9 +124,10 @@ spec:
       name: Register in Backstage Catalog
       action: catalog:register
       input:
-        # Register the resource entity so it appears in the Backstage catalog after merge
+        # Register the resource entity so it appears in the Backstage catalog after PR merge
+        # catalog-info.yaml is in a separate catalog/ path excluded from ArgoCD sync
         repoContentsUrl: ${{ steps['pr'].output.remoteUrl }}
-        catalogInfoPath: /teams/${{ parameters.team }}/infra/catalog-info.yaml
+        catalogInfoPath: /catalog/${{ parameters.team }}/catalog-info.yaml
         optional: true
 
     - id: notify
