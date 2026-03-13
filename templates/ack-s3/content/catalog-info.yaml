@@ -1,0 +1,24 @@
+apiVersion: backstage.io/v1alpha1
+kind: Resource
+metadata:
+  name: ${{ values.team }}-${{ values.projectName }}-${{ values.environment }}-bucket
+  description: "S3 bucket for ${{ values.projectName }} (${{ values.environment }}) — provisioned via Backstage/ACK"
+  annotations:
+    backstage.io/managed-by-location: "url:https://github.com/patel0ankur/idp-infra-configs/blob/main/teams/${{ values.team }}/infra/s3-bucket.yaml"
+    backstage.io/managed-by-origin-location: "url:https://github.com/patel0ankur/idp-infra-configs/blob/main/teams/${{ values.team }}/infra/s3-bucket.yaml"
+  labels:
+    team: ${{ values.team }}
+    environment: ${{ values.environment }}
+    cost-center: ${{ values.costCenter }}
+    provisioner: ack
+  tags:
+    - s3
+    - aws
+    - ack
+    - ${{ values.environment }}
+spec:
+  type: s3-bucket
+  owner: group:${{ values.team }}
+  lifecycle: production
+  system: ${{ values.team }}-infrastructure
+  dependencyOf: []

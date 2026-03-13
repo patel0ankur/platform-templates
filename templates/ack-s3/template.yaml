@@ -114,6 +114,15 @@ spec:
         branchName: "ack/s3-${{ parameters.team }}-${{ parameters.projectName }}-${{ parameters.environment }}"
         targetBranchName: main
 
+    - id: register
+      name: Register in Backstage Catalog
+      action: catalog:register
+      input:
+        # Register the resource entity so it appears in the Backstage catalog after merge
+        repoContentsUrl: ${{ steps['pr'].output.remoteUrl }}
+        catalogInfoPath: /teams/${{ parameters.team }}/infra/catalog-info.yaml
+        optional: true
+
     - id: notify
       name: Notify
       action: notification:send
@@ -140,4 +149,4 @@ spec:
           After the PR is approved and merged:
           - ArgoCD will sync automatically
           - ACK will create the S3 bucket in AWS
-          - No further action needed from you
+          - The bucket will appear in Backstage catalog → Resources tab
