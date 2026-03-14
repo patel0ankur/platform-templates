@@ -10,7 +10,7 @@ metadata:
     provisioner: ack
 spec:
   name: ${{ values.team }}-${{ values.projectName }}-${{ values.environment }}-subnet-group
-  description: "Subnet group for ${{ values.projectName }} (${{ values.environment }}) — managed by Backstage/ACK"
+  description: "Subnet group for ${{ values.projectName }} (${{ values.environment }}) - managed by Backstage/ACK"
   # Private subnets from the platform VPC (set by platform team in this template)
   # Developers don't need to know these — the template handles it automatically
   subnetIDs:
