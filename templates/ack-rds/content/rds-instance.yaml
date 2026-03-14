@@ -13,7 +13,7 @@ spec:
   dbInstanceIdentifier: ${{ values.team }}-${{ values.projectName }}-${{ values.environment }}
   dbInstanceClass: ${{ values.instanceClass }}
   engine: postgres
-  engineVersion: "15.4"
+  engineVersion: "15.17"
   masterUsername: ${{ values.dbUsername }}
   masterUserPassword:
     namespace: ${{ values.team }}
