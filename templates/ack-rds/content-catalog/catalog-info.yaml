@@ -1,0 +1,39 @@
+apiVersion: backstage.io/v1alpha1
+kind: Resource
+metadata:
+  name: ${{ values.team }}-${{ values.projectName }}-${{ values.environment }}-db
+  description: "RDS PostgreSQL database for ${{ values.projectName }} (${{ values.environment }}) — provisioned via Backstage/ACK"
+  annotations:
+    backstage.io/managed-by-location: "url:https://github.com/patel0ankur/idp-infra-configs/blob/main/teams/${{ values.team }}/infra/rds-instance.yaml"
+    backstage.io/managed-by-origin-location: "url:https://github.com/patel0ankur/idp-infra-configs/blob/main/teams/${{ values.team }}/infra/rds-instance.yaml"
+    # ArgoCD tab — shows sync status, health, deployment history for this team's Application
+    argocd/app-name: "${{ values.team }}"
+    # AWS resource details
+    aws/resource-type: "RDS PostgreSQL Instance"
+    aws/db-identifier: "${{ values.team }}-${{ values.projectName }}-${{ values.environment }}"
+    aws/region: "us-east-1"
+    aws/console-url: "https://us-east-1.console.aws.amazon.com/rds/home?region=us-east-1#database:id=${{ values.team }}-${{ values.projectName }}-${{ values.environment }};is-cluster=false"
+  labels:
+    team: ${{ values.team }}
+    environment: ${{ values.environment }}
+    cost-center: ${{ values.costCenter }}
+    provisioner: ack
+  tags:
+    - rds
+    - postgresql
+    - aws
+    - ack
+    - ${{ values.environment }}
+  links:
+    - url: "https://us-east-1.console.aws.amazon.com/rds/home?region=us-east-1#database:id=${{ values.team }}-${{ values.projectName }}-${{ values.environment }};is-cluster=false"
+      title: "View in AWS RDS Console"
+      icon: dashboard
+    - url: "https://github.com/patel0ankur/idp-infra-configs/blob/main/teams/${{ values.team }}/infra/rds-instance.yaml"
+      title: "View ACK Manifest (GitHub)"
+      icon: github
+spec:
+  type: rds-database
+  owner: group:${{ values.team }}
+  lifecycle: production
+  system: ${{ values.team }}-infrastructure
+  dependencyOf: []

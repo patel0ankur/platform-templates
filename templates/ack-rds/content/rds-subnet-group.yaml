@@ -11,11 +11,11 @@ metadata:
 spec:
   name: ${{ values.team }}-${{ values.projectName }}-${{ values.environment }}-subnet-group
   description: "Subnet group for ${{ values.projectName }} (${{ values.environment }}) — managed by Backstage/ACK"
-  # subnetIDs are populated from the VPC baseline Terraform module outputs
-  # Update these with the actual private subnet IDs from your VPC
+  # Private subnets from the platform VPC (set by platform team in this template)
+  # Developers don't need to know these — the template handles it automatically
   subnetIDs:
-    - subnet-REPLACE_WITH_PRIVATE_SUBNET_1
-    - subnet-REPLACE_WITH_PRIVATE_SUBNET_2
+    - subnet-0a055dddc54e2415a   # us-east-1b private
+    - subnet-0d3ebae65f79ba484   # us-east-1a private
   tags:
     - key: team
       value: ${{ values.team }}

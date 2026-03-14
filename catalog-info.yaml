@@ -9,3 +9,4 @@ spec:
   targets:
     - ./templates/ack-s3/template.yaml
     - ./templates/ack-rds/template.yaml
+    # Add new templates here — Backstage auto-discovers on next refresh, no rebuild needed

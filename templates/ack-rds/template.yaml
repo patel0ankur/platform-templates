@@ -108,6 +108,18 @@ spec:
           allocatedStorage: ${{ parameters.allocatedStorage }}
           purpose: ${{ parameters.purpose }}
 
+    - id: fetch-catalog
+      name: Generate Backstage Catalog Entity
+      action: fetch:template
+      input:
+        url: ./content-catalog
+        targetPath: catalog/${{ parameters.team }}
+        values:
+          projectName: ${{ parameters.projectName }}
+          team: ${{ parameters.team }}
+          environment: ${{ parameters.environment }}
+          costCenter: ${{ parameters.costCenter }}
+
     - id: pr
       name: Open Pull Request
       action: publish:github:pull-request
@@ -137,6 +149,13 @@ spec:
           > ⚠️ DB password will be stored in AWS Secrets Manager and referenced as a Kubernetes secret
         branchName: "ack/rds-${{ parameters.team }}-${{ parameters.projectName }}-${{ parameters.environment }}"
         targetBranchName: main
+
+    - id: register
+      name: Register in Backstage Catalog
+      action: catalog:register
+      input:
+        repoContentsUrl: ${{ steps['pr'].output.remoteUrl }}
+        catalogInfoPath: /catalog/${{ parameters.team }}/catalog-info.yaml
 
     - id: notify
       name: Notify
