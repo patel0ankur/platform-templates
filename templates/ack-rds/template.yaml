@@ -156,6 +156,7 @@ spec:
       input:
         repoContentsUrl: ${{ steps['pr'].output.remoteUrl }}
         catalogInfoPath: /catalog/${{ parameters.team }}/catalog-info.yaml
+        optional: true
 
     - id: notify
       name: Notify
