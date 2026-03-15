@@ -132,15 +132,6 @@ spec:
         branchName: "ack/s3-${{ parameters.team }}-${{ parameters.projectName }}-${{ parameters.environment }}"
         targetBranchName: main
 
-    - id: register
-      name: Register in Backstage Catalog
-      action: catalog:register
-      input:
-        # Register the resource entity so it appears in Backstage Catalog → Resources
-        # catalog/ is excluded from ArgoCD sync via .argocdignore
-        repoContentsUrl: ${{ steps['pr'].output.remoteUrl }}
-        catalogInfoPath: /catalog/${{ parameters.team }}/catalog-info.yaml
-
     - id: notify
       name: Notify
       action: notification:send
