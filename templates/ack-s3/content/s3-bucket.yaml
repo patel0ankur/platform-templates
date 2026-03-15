@@ -12,26 +12,27 @@ metadata:
 spec:
   name: ${{ values.team }}-${{ values.projectName }}-${{ values.environment }}
   {% if values.versioning %}
-  versioningConfiguration:
+  versioning:
     status: Enabled
   {% endif %}
-  serverSideEncryptionConfiguration:
+  encryption:
     rules:
       - applyServerSideEncryptionByDefault:
           sseAlgorithm: aws:kms
-  publicAccessBlockConfiguration:
+  publicAccessBlock:
     blockPublicAcls: true
     blockPublicPolicy: true
     ignorePublicAcls: true
     restrictPublicBuckets: true
-  tags:
-    - key: team
-      value: ${{ values.team }}
-    - key: environment
-      value: ${{ values.environment }}
-    - key: cost-center
-      value: ${{ values.costCenter }}
-    - key: managed-by
-      value: backstage-ack
-    - key: project
-      value: ${{ values.projectName }}
+  tagging:
+    tagSet:
+      - key: team
+        value: ${{ values.team }}
+      - key: environment
+        value: ${{ values.environment }}
+      - key: cost-center
+        value: ${{ values.costCenter }}
+      - key: managed-by
+        value: backstage-ack
+      - key: project
+        value: ${{ values.projectName }}
